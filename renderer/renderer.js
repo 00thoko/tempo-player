@@ -365,16 +365,20 @@ $('addLibFolder').onclick = async () => {
 audio.addEventListener('play', () => { renderPlayIcon(); updateActive(); });
 audio.addEventListener('pause', () => { renderPlayIcon(); updateActive(); });
 audio.addEventListener('loadedmetadata', () => {
-  $('dur').textContent = fmt(audio.duration);
+  $('dur').textContent = fmt(currentDuration());
   const t = state.queue[state.index];
   if (t && !t.duration && isFinite(audio.duration)) { t.duration = audio.duration; updateDuration(t); }
 });
 audio.addEventListener('timeupdate', () => {
-  if (seeking || !audio.duration) return;
+  const d = currentDuration();
+  if (seeking || !d) return;
   $('cur').textContent = fmt(audio.currentTime);
-  $('seek').value = Math.round((audio.currentTime / audio.duration) * 1000);
+  $('seek').value = Math.min(1000, Math.round((audio.currentTime / d) * 1000));
   setFill($('seek'));
 });
+// A drag can never stay "stuck": clear it when the seek lands or a new song loads.
+audio.addEventListener('seeked', () => { seeking = false; });
+audio.addEventListener('loadstart', () => { seeking = false; });
 audio.addEventListener('ended', () => {
   if (state.repeat === 'one') { audio.currentTime = 0; audio.play(); }
   else next();
@@ -386,15 +390,24 @@ audio.addEventListener('error', () => {
 
 /* ------------------------------ Controls ------------------------------ */
 
+/** Real duration from the audio element, or the tag duration if the element can't tell. */
+function currentDuration() {
+  if (isFinite(audio.duration) && audio.duration > 0) return audio.duration;
+  const t = state.queue[state.index];
+  return (t && t.duration) || 0;
+}
+
 let seeking = false;
 const seekEl = $('seek');
 seekEl.addEventListener('input', () => {
   seeking = true;
   setFill(seekEl);
-  if (audio.duration) $('cur').textContent = fmt((seekEl.value / 1000) * audio.duration);
+  const d = currentDuration();
+  if (d) $('cur').textContent = fmt((seekEl.value / 1000) * d);
 });
 seekEl.addEventListener('change', () => {
-  if (audio.duration) audio.currentTime = (seekEl.value / 1000) * audio.duration;
+  const d = currentDuration();
+  if (d) audio.currentTime = (seekEl.value / 1000) * d;
   seeking = false;
 });
 

@@ -1,7 +1,7 @@
-const { app, BrowserWindow, ipcMain, dialog, globalShortcut, protocol, net } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, globalShortcut, protocol } = require('electron');
 const path = require('path');
-const { pathToFileURL } = require('url');
 const library = require('./library');
+const { createMediaHandler } = require('./media');
 
 let mainWindow;
 
@@ -72,14 +72,7 @@ ipcMain.handle('library:remove-folder', (_e, folder) => library.removeFolder(fol
 app.whenReady().then(() => {
   // Serve local audio files and cached cover art through a custom scheme
   // so the renderer can stream and seek them.
-  protocol.handle('media', (request) => {
-    const filePath = decodeURIComponent(new URL(request.url).pathname.slice(1));
-    if (!library.isServable(filePath)) return new Response('Forbidden', { status: 403 });
-    return net.fetch(pathToFileURL(filePath).toString(), {
-      headers: request.headers,
-      method: request.method
-    });
-  });
+  protocol.handle('media', createMediaHandler(library.isServable));
 
   createWindow();
 
