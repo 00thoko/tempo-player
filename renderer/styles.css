@@ -76,8 +76,20 @@ body {
   display: flex; align-items: center; justify-content: space-between;
   padding: 20px 24px 12px;
 }
-.queue-head h2 { margin: 0; font-size: 18px; }
-.count { color: var(--muted); font-weight: 400; margin-left: 6px; }
+.tabs { display: flex; gap: 6px; }
+.tab {
+  background: none; border: 0; color: var(--muted); font: inherit; font-size: 18px; font-weight: 700;
+  padding: 4px 12px; border-radius: 10px; cursor: pointer;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--text); background: var(--panel-2); }
+.count { color: var(--muted); font-weight: 400; font-size: 13px; margin-left: 4px; }
+.queue-tools [hidden] { display: none; }
+.scan {
+  margin: 0 24px 8px; padding: 6px 12px; border-radius: 8px;
+  background: var(--panel); color: var(--muted); font-size: 12px;
+}
+.scan[hidden] { display: none; }
 .queue-tools { display: flex; gap: 10px; align-items: center; }
 #filter {
   background: var(--panel); border: 1px solid var(--line); color: var(--text);
@@ -94,6 +106,9 @@ body {
   padding: 8px 12px;
   border-radius: 10px;
   cursor: pointer;
+  /* Skip layout work for rows that are off-screen, so big libraries stay smooth. */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 56px;
 }
 .row:hover { background: var(--panel); }
 .row.active { background: var(--panel-2); }
@@ -110,8 +125,8 @@ body {
 .row .r-remove {
   display: none; background: none; border: 0; color: var(--muted); cursor: pointer; font-size: 16px;
 }
-.row:hover .r-dur { display: none; }
-.row:hover .r-remove { display: block; justify-self: end; }
+.row.removable:hover .r-dur { display: none; }
+.row.removable:hover .r-remove { display: block; justify-self: end; }
 .row .r-remove:hover { color: #ff6b6b; }
 
 .empty { position: absolute; inset: 80px 0 0; display: grid; place-items: center; text-align: center; color: var(--muted); pointer-events: none; }
@@ -162,6 +177,25 @@ input[type="range"]::-webkit-slider-thumb {
   background: #fff; opacity: 0; transition: opacity 0.1s;
 }
 input[type="range"]:hover::-webkit-slider-thumb { opacity: 1; }
+
+/* ---------- Library folders dialog ---------- */
+.dialog {
+  background: var(--panel); color: var(--text); border: 1px solid var(--line);
+  border-radius: 16px; padding: 24px; width: min(520px, 90vw);
+}
+.dialog::backdrop { background: rgba(0, 0, 0, 0.6); }
+.dialog h3 { margin: 0 0 6px; font-size: 18px; }
+.dialog-note { margin: 0 0 14px; color: var(--muted); font-size: 13px; }
+.folder-list { list-style: none; margin: 0 0 16px; padding: 0; max-height: 240px; overflow-y: auto; }
+.folder-list li {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 8px 12px; background: var(--panel-2); border-radius: 8px; margin-bottom: 6px;
+}
+.folder-list .f-path { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.folder-list button { background: none; border: 0; color: var(--muted); cursor: pointer; font-size: 16px; }
+.folder-list button:hover { color: #ff6b6b; }
+.folder-list .f-none { color: var(--muted); justify-content: center; }
+.dialog-actions { display: flex; gap: 10px; }
 
 /* ---------- Drag & drop ---------- */
 .drop {

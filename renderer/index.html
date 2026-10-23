@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; img-src 'self' data:; media-src 'self' media:; style-src 'self'; script-src 'self'" />
+        content="default-src 'self'; img-src 'self' data: media:; media-src 'self' media:; style-src 'self'; script-src 'self'" />
   <title>Tempo Player</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
@@ -16,26 +16,32 @@
       </div>
       <div class="meta">
         <div class="title" id="title">Nothing playing</div>
-        <div class="artist" id="artist">Open files or a folder to start</div>
+        <div class="artist" id="artist">Pick a song from your library</div>
         <div class="album" id="album"></div>
       </div>
       <div class="open-buttons">
-        <button class="btn" id="openFiles">Add files</button>
-        <button class="btn" id="openFolder">Add folder</button>
+        <button class="btn" id="openFiles">Open files</button>
+        <button class="btn" id="openFolder">Open folder</button>
       </div>
-      <div class="hint">Tip: drag and drop songs or folders anywhere in this window.</div>
+      <div class="hint">Your library loads automatically. You can also drag songs or folders into this window to play them once.</div>
     </aside>
 
     <main class="queue">
       <header class="queue-head">
-        <h2>Queue <span id="count" class="count">0</span></h2>
+        <div class="tabs" role="tablist">
+          <button class="tab active" id="tabLibrary" role="tab" aria-selected="true">Library <span id="libCount" class="count">0</span></button>
+          <button class="tab" id="tabQueue" role="tab" aria-selected="false">Queue <span id="count" class="count">0</span></button>
+        </div>
         <div class="queue-tools">
-          <input id="filter" type="search" placeholder="Search queue" />
-          <button class="btn ghost" id="clear">Clear</button>
+          <input id="filter" type="search" placeholder="Search library" />
+          <button class="btn ghost" id="playAll" title="Play everything shown">Play all</button>
+          <button class="btn ghost" id="folders" title="Choose which folders are scanned">Folders</button>
+          <button class="btn ghost" id="clear" hidden>Clear</button>
         </div>
       </header>
+      <div id="scanStatus" class="scan" hidden></div>
       <ul id="list" class="list"></ul>
-      <div id="empty" class="empty">Your queue is empty.<br />Add some music to get going.</div>
+      <div id="empty" class="empty" hidden></div>
     </main>
 
     <footer class="bar">
@@ -73,6 +79,17 @@
     </footer>
 
     <div id="drop" class="drop" hidden>Drop to add to queue</div>
+
+    <dialog id="foldersDialog" class="dialog">
+      <h3>Library folders</h3>
+      <p class="dialog-note">Tempo scans these folders (and everything inside them) every time it starts.</p>
+      <ul id="folderList" class="folder-list"></ul>
+      <div class="dialog-actions">
+        <button class="btn" id="addLibFolder">Add folder</button>
+        <button class="btn" id="rescan">Rescan now</button>
+        <button class="btn" id="closeFolders">Done</button>
+      </div>
+    </dialog>
   </div>
   <audio id="audio" preload="metadata"></audio>
   <script src="renderer.js"></script>

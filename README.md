@@ -4,7 +4,8 @@ A simple, modern desktop music player built with Electron.
 
 ## Features
 
-- Add songs or whole folders (MP3, FLAC, WAV, OGG, M4A, AAC, Opus, WMA), including drag and drop
+- Automatic music library: scans your Music folder on start-up (and any folders you add under **Folders**), remembers them, and caches tags so later launches are fast
+- Open single songs or folders to play once, including drag and drop (MP3, FLAC, WAV, OGG, M4A, AAC, Opus, WMA)
 - Queue with title, artist, album, duration and cover art
 - Play/pause, next/previous, seek bar, volume, mute
 - Shuffle, repeat (off / all / one)
@@ -46,7 +47,8 @@ Keyboard media keys (play/pause, next, previous) also work when the app is not f
 ## Project layout
 
 ```
-main.js            Electron main process: dialogs, metadata parsing, media keys
+main.js            Electron main process: window, dialogs, IPC, media keys
+library.js         Library folders, scanning, tag cache, cover art extraction
 preload.js         Safe bridge between main and renderer
 renderer/
   index.html       UI markup
