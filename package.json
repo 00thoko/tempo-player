@@ -1,0 +1,27 @@
+{
+  "name": "tempo-player",
+  "version": "1.0.0",
+  "description": "A simple, modern desktop music player",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "music-metadata": "^10.6.0"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.example.tempoplayer",
+    "productName": "Tempo Player",
+    "files": ["main.js", "preload.js", "renderer/**/*", "package.json"],
+    "win": { "target": "nsis" },
+    "mac": { "target": "dmg" },
+    "linux": { "target": "AppImage" }
+  }
+}

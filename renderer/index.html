@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; img-src 'self' data:; media-src 'self' media:; style-src 'self'; script-src 'self'" />
+  <title>Tempo Player</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <aside class="now">
+      <div class="cover" id="cover">
+        <svg viewBox="0 0 24 24" width="64" height="64" aria-hidden="true"><path fill="currentColor" d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/></svg>
+      </div>
+      <div class="meta">
+        <div class="title" id="title">Nothing playing</div>
+        <div class="artist" id="artist">Open files or a folder to start</div>
+        <div class="album" id="album"></div>
+      </div>
+      <div class="open-buttons">
+        <button class="btn" id="openFiles">Add files</button>
+        <button class="btn" id="openFolder">Add folder</button>
+      </div>
+      <div class="hint">Tip: drag and drop songs or folders anywhere in this window.</div>
+    </aside>
+
+    <main class="queue">
+      <header class="queue-head">
+        <h2>Queue <span id="count" class="count">0</span></h2>
+        <div class="queue-tools">
+          <input id="filter" type="search" placeholder="Search queue" />
+          <button class="btn ghost" id="clear">Clear</button>
+        </div>
+      </header>
+      <ul id="list" class="list"></ul>
+      <div id="empty" class="empty">Your queue is empty.<br />Add some music to get going.</div>
+    </main>
+
+    <footer class="bar">
+      <div class="transport">
+        <button class="icon" id="shuffle" title="Shuffle (S)" aria-pressed="false">
+          <svg viewBox="0 0 24 24"><path fill="currentColor" d="M10.59 9.17 5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg>
+        </button>
+        <button class="icon" id="prev" title="Previous (Shift+←)">
+          <svg viewBox="0 0 24 24"><path fill="currentColor" d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg>
+        </button>
+        <button class="icon play" id="play" title="Play / Pause (Space)">
+          <svg id="playIcon" viewBox="0 0 24 24"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>
+        </button>
+        <button class="icon" id="next" title="Next (Shift+→)">
+          <svg viewBox="0 0 24 24"><path fill="currentColor" d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+        </button>
+        <button class="icon" id="repeat" title="Repeat (R)" aria-pressed="false">
+          <svg viewBox="0 0 24 24"><path fill="currentColor" d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg>
+          <span id="repeatBadge" class="badge" hidden>1</span>
+        </button>
+      </div>
+
+      <div class="progress">
+        <span id="cur" class="time">0:00</span>
+        <input id="seek" type="range" min="0" max="1000" value="0" step="1" aria-label="Seek" />
+        <span id="dur" class="time">0:00</span>
+      </div>
+
+      <div class="volume">
+        <button class="icon" id="mute" title="Mute (M)">
+          <svg id="volIcon" viewBox="0 0 24 24"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.47 4.47 0 0 0 2.5-4z"/></svg>
+        </button>
+        <input id="vol" type="range" min="0" max="100" value="80" aria-label="Volume" />
+      </div>
+    </footer>
+
+    <div id="drop" class="drop" hidden>Drop to add to queue</div>
+  </div>
+  <audio id="audio" preload="metadata"></audio>
+  <script src="renderer.js"></script>
+</body>
+</html>
