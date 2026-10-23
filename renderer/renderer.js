@@ -2,11 +2,15 @@ const $ = (id) => document.getElementById(id);
 const audio = $('audio');
 
 const state = {
+  view: 'library',   // library | queue
+  library: [],       // every track found by the scanner
+  folders: [],       // folders the scanner looks in
+  scanning: false,
   queue: [],
   index: -1,
   shuffle: false,
-  repeat: 'off', // off | all | one
-  history: [],   // played indices, used for "previous" while shuffling
+  repeat: 'off',     // off | all | one
+  history: [],       // played indices, used for "previous" while shuffling
   filter: ''
 };
 
@@ -24,53 +28,100 @@ const setFill = (el) => {
 
 /* ------------------------------ Rendering ------------------------------ */
 
-function renderQueue() {
-  const list = $('list');
-  list.textContent = '';
+const searchText = (t) => t._s || (t._s = `${t.title} ${t.artist} ${t.album}`.toLowerCase());
+
+function visibleItems() {
   const q = state.filter.trim().toLowerCase();
+  const items = state.view === 'queue' ? state.queue : state.library;
+  return q ? items.filter((t) => searchText(t).includes(q)) : items.slice();
+}
 
-  state.queue.forEach((t, i) => {
-    if (q && !`${t.title} ${t.artist} ${t.album}`.toLowerCase().includes(q)) return;
+function buildRow(t, n, activePath, playing, removable) {
+  const active = t.path === activePath;
 
-    const li = document.createElement('li');
-    li.className = 'row' + (i === state.index ? ' active' : '');
-    li.dataset.i = i;
+  const li = document.createElement('li');
+  li.className = 'row' + (active ? ' active' : '') + (removable ? ' removable' : '');
+  li.dataset.path = t.path;
+  li.dataset.n = n;
 
-    const idx = document.createElement('div');
-    idx.className = 'r-idx';
-    idx.textContent = i === state.index && !audio.paused ? '▶' : i + 1;
+  const idx = document.createElement('div');
+  idx.className = 'r-idx';
+  idx.textContent = active && playing ? '▶' : n;
 
-    const art = document.createElement('div');
-    art.className = 'r-art';
-    if (t.cover) art.style.backgroundImage = `url("${t.cover}")`;
+  const art = document.createElement('div');
+  art.className = 'r-art';
+  if (t.cover) art.style.backgroundImage = `url("${t.cover}")`;
 
-    const text = document.createElement('div');
-    text.className = 'r-text';
-    const title = document.createElement('div');
-    title.className = 'r-title';
-    title.textContent = t.title;
-    const sub = document.createElement('div');
-    sub.className = 'r-sub';
-    sub.textContent = [t.artist, t.album].filter(Boolean).join(' · ');
-    text.append(title, sub);
+  const text = document.createElement('div');
+  text.className = 'r-text';
+  const title = document.createElement('div');
+  title.className = 'r-title';
+  title.textContent = t.title;
+  const sub = document.createElement('div');
+  sub.className = 'r-sub';
+  sub.textContent = [t.artist, t.album].filter(Boolean).join(' · ');
+  text.append(title, sub);
 
-    const right = document.createElement('div');
-    const dur = document.createElement('span');
-    dur.className = 'r-dur';
-    dur.textContent = t.duration ? fmt(t.duration) : '';
+  const right = document.createElement('div');
+  const dur = document.createElement('span');
+  dur.className = 'r-dur';
+  dur.textContent = t.duration ? fmt(t.duration) : '';
+  right.append(dur);
+  if (removable) {
     const rm = document.createElement('button');
     rm.className = 'r-remove';
     rm.title = 'Remove from queue';
     rm.textContent = '✕';
-    rm.dataset.remove = i;
-    right.append(dur, rm);
+    rm.dataset.remove = '1';
+    right.append(rm);
+  }
 
-    li.append(idx, art, text, right);
-    list.append(li);
-  });
+  li.append(idx, art, text, right);
+  return li;
+}
+
+function renderList() {
+  const items = visibleItems();
+  const activePath = state.queue[state.index] && state.queue[state.index].path;
+  const playing = !audio.paused;
+  const removable = state.view === 'queue';
+
+  const frag = document.createDocumentFragment();
+  items.forEach((t, i) => frag.append(buildRow(t, i + 1, activePath, playing, removable)));
+  const list = $('list');
+  list.textContent = '';
+  list.append(frag);
 
   $('count').textContent = state.queue.length;
-  $('empty').hidden = state.queue.length > 0;
+  $('libCount').textContent = state.library.length;
+  renderEmpty(items.length);
+}
+
+function renderEmpty(shown) {
+  const el = $('empty');
+  el.hidden = shown > 0;
+  if (shown > 0) return;
+  const searching = state.filter.trim() !== '';
+  if (searching) el.textContent = 'No songs match your search.';
+  else if (state.view === 'queue') el.innerHTML = 'Your queue is empty.<br />Pick songs from your library.';
+  else if (state.scanning) el.textContent = 'Scanning your music…';
+  else el.innerHTML = 'No music found yet.<br />Use <b>Folders</b> to choose where your music lives.';
+}
+
+/** Cheap refresh of the highlighted row and play icon, without rebuilding the whole list. */
+function updateActive() {
+  const activePath = state.queue[state.index] && state.queue[state.index].path;
+  const playing = !audio.paused;
+  for (const row of $('list').children) {
+    const on = row.dataset.path === activePath;
+    row.classList.toggle('active', on);
+    row.firstChild.textContent = on && playing ? '▶' : row.dataset.n;
+  }
+}
+
+function updateDuration(t) {
+  const el = $('list').querySelector(`.row[data-path="${CSS.escape(t.path)}"] .r-dur`);
+  if (el) el.textContent = fmt(t.duration);
 }
 
 function renderNowPlaying() {
@@ -78,7 +129,7 @@ function renderNowPlaying() {
   const cover = $('cover');
   if (!t) {
     $('title').textContent = 'Nothing playing';
-    $('artist').textContent = 'Open files or a folder to start';
+    $('artist').textContent = 'Pick a song from your library';
     $('album').textContent = '';
     cover.style.backgroundImage = '';
     cover.classList.remove('has-art');
@@ -104,6 +155,23 @@ function renderPlayIcon() {
     : '<path fill="currentColor" d="M6 5h4v14H6zm8 0h4v14h-4z"/>';
 }
 
+function setView(view) {
+  state.view = view;
+  const lib = view === 'library';
+  $('tabLibrary').classList.toggle('active', lib);
+  $('tabLibrary').setAttribute('aria-selected', String(lib));
+  $('tabQueue').classList.toggle('active', !lib);
+  $('tabQueue').setAttribute('aria-selected', String(!lib));
+  $('playAll').hidden = !lib;
+  $('folders').hidden = !lib;
+  $('clear').hidden = lib;
+  $('filter').placeholder = lib ? 'Search library' : 'Search queue';
+  $('filter').value = '';
+  state.filter = '';
+  renderList();
+  scrollToActive();
+}
+
 /* ------------------------------ Playback ------------------------------ */
 
 function playIndex(i, { pushHistory = true } = {}) {
@@ -113,8 +181,18 @@ function playIndex(i, { pushHistory = true } = {}) {
   audio.src = state.queue[i].url;
   audio.play().catch(() => {});
   renderNowPlaying();
-  renderQueue();
+  updateActive();
   scrollToActive();
+}
+
+/** Replace the queue with `list` and start playing at position `i`. */
+function playFromList(list, i) {
+  if (i < 0 || i >= list.length) return;
+  state.queue = list;
+  state.history = [];
+  state.index = -1;
+  $('count').textContent = state.queue.length;
+  playIndex(i, { pushHistory: false });
 }
 
 function scrollToActive() {
@@ -157,18 +235,20 @@ function prev() {
 function toggle() {
   if (state.index < 0) {
     if (state.queue.length) playIndex(0);
+    else if (state.library.length) playFromList(state.library.slice(), 0);
     return;
   }
   if (audio.paused) audio.play(); else audio.pause();
 }
 
+/** Songs opened by hand (dialogs or drag and drop) go to the queue. */
 function addTracks(tracks) {
   if (!tracks || !tracks.length) return;
   const wasEmpty = state.queue.length === 0;
   const known = new Set(state.queue.map((t) => t.path));
   const fresh = tracks.filter((t) => !known.has(t.path));
   state.queue.push(...fresh);
-  renderQueue();
+  setView('queue');
   if (wasEmpty && fresh.length) playIndex(0);
 }
 
@@ -177,18 +257,17 @@ function removeAt(i) {
   state.queue.splice(i, 1);
   state.history = state.history.filter((h) => h !== i).map((h) => (h > i ? h - 1 : h));
   if (i < state.index) state.index--;
-  if (wasCurrent) {
-    if (state.queue.length === 0) {
-      audio.pause(); audio.removeAttribute('src'); audio.load();
-      state.index = -1;
-    } else {
-      state.index = Math.min(i, state.queue.length) - 1;
-      next();
-      return;
-    }
+  if (wasCurrent && state.queue.length === 0) {
+    audio.pause(); audio.removeAttribute('src'); audio.load();
+    state.index = -1;
+  }
+  renderList();
+  if (wasCurrent && state.queue.length > 0) {
+    state.index = Math.min(i, state.queue.length) - 1;
+    next();
+    return;
   }
   renderNowPlaying();
-  renderQueue();
 }
 
 function clearQueue() {
@@ -199,20 +278,96 @@ function clearQueue() {
   state.index = -1;
   state.history = [];
   renderNowPlaying();
-  renderQueue();
+  renderList();
   renderPlayIcon();
   $('seek').value = 0; setFill($('seek'));
   $('cur').textContent = '0:00'; $('dur').textContent = '0:00';
 }
 
+/* ------------------------------ Library scanning ------------------------------ */
+
+let scanHideTimer;
+function showScan(text) {
+  clearTimeout(scanHideTimer);
+  const el = $('scanStatus');
+  el.textContent = text;
+  el.hidden = false;
+}
+
+async function rescan() {
+  if (state.scanning) return;
+  state.scanning = true;
+  showScan('Scanning your music…');
+  if (state.view === 'library' && state.library.length === 0) renderEmpty(0);
+  try {
+    const tracks = await window.tempo.libraryScan();
+    if (tracks) {
+      state.library = tracks;
+      showScan(`Library updated: ${tracks.length} song${tracks.length === 1 ? '' : 's'}`);
+    }
+  } catch (err) {
+    showScan('Could not scan your music folders.');
+  } finally {
+    state.scanning = false;
+    scanHideTimer = setTimeout(() => { $('scanStatus').hidden = true; }, 3000);
+    renderList();
+    updateActive();
+  }
+}
+
+window.tempo.onLibraryProgress(({ done, total }) => {
+  if (state.scanning) showScan(`Scanning your music… ${done} / ${total}`);
+});
+
+/* ------------------------------ Library folders dialog ------------------------------ */
+
+function renderFolders(folders) {
+  state.folders = folders;
+  const ul = $('folderList');
+  ul.textContent = '';
+  if (!folders.length) {
+    const li = document.createElement('li');
+    li.className = 'f-none';
+    li.textContent = 'No folders yet. Add one to build your library.';
+    ul.append(li);
+    return;
+  }
+  for (const f of folders) {
+    const li = document.createElement('li');
+    const p = document.createElement('span');
+    p.className = 'f-path';
+    p.title = f;
+    p.textContent = f;
+    const rm = document.createElement('button');
+    rm.title = 'Stop scanning this folder';
+    rm.textContent = '✕';
+    rm.onclick = async () => {
+      renderFolders(await window.tempo.libraryRemoveFolder(f));
+      rescan();
+    };
+    li.append(p, rm);
+    ul.append(li);
+  }
+}
+
+$('folders').onclick = () => { renderFolders(state.folders); $('foldersDialog').showModal(); };
+$('closeFolders').onclick = () => $('foldersDialog').close();
+$('rescan').onclick = rescan;
+$('addLibFolder').onclick = async () => {
+  const before = state.folders.length;
+  const folders = await window.tempo.libraryAddFolder();
+  renderFolders(folders);
+  if (folders.length !== before) rescan();
+};
+
 /* ------------------------------ Audio events ------------------------------ */
 
-audio.addEventListener('play', () => { renderPlayIcon(); renderQueue(); });
-audio.addEventListener('pause', () => { renderPlayIcon(); renderQueue(); });
+audio.addEventListener('play', () => { renderPlayIcon(); updateActive(); });
+audio.addEventListener('pause', () => { renderPlayIcon(); updateActive(); });
 audio.addEventListener('loadedmetadata', () => {
   $('dur').textContent = fmt(audio.duration);
   const t = state.queue[state.index];
-  if (t && !t.duration && isFinite(audio.duration)) { t.duration = audio.duration; renderQueue(); }
+  if (t && !t.duration && isFinite(audio.duration)) { t.duration = audio.duration; updateDuration(t); }
 });
 audio.addEventListener('timeupdate', () => {
   if (seeking || !audio.duration) return;
@@ -286,21 +441,44 @@ $('shuffle').onclick = () => setShuffle(!state.shuffle);
 $('repeat').onclick = cycleRepeat;
 $('mute').onclick = toggleMute;
 $('clear').onclick = clearQueue;
+$('tabLibrary').onclick = () => setView('library');
+$('tabQueue').onclick = () => setView('queue');
 $('openFiles').onclick = async () => addTracks(await window.tempo.openFiles());
 $('openFolder').onclick = async () => addTracks(await window.tempo.openFolder());
-$('filter').addEventListener('input', (e) => { state.filter = e.target.value; renderQueue(); });
+
+$('playAll').onclick = () => {
+  const items = visibleItems();
+  if (!items.length) return;
+  playFromList(items, state.shuffle ? Math.floor(Math.random() * items.length) : 0);
+};
+
+let filterTimer;
+$('filter').addEventListener('input', (e) => {
+  state.filter = e.target.value;
+  clearTimeout(filterTimer);
+  filterTimer = setTimeout(renderList, 120);
+});
 
 $('list').addEventListener('click', (e) => {
-  const rm = e.target.closest('[data-remove]');
-  if (rm) { removeAt(+rm.dataset.remove); return; }
   const row = e.target.closest('.row');
-  if (row) playIndex(+row.dataset.i);
+  if (!row) return;
+  const p = row.dataset.path;
+  if (state.view === 'queue') {
+    const i = state.queue.findIndex((t) => t.path === p);
+    if (e.target.closest('[data-remove]')) removeAt(i);
+    else playIndex(i);
+  } else {
+    // Playing from the library queues everything currently shown, starting here.
+    const items = visibleItems();
+    playFromList(items, items.findIndex((t) => t.path === p));
+  }
 });
 
 /* ------------------------------ Keyboard & media keys ------------------------------ */
 
 window.addEventListener('keydown', (e) => {
   if (e.target.tagName === 'INPUT' && e.target.type === 'search') return;
+  if ($('foldersDialog').open) return;
   if (e.code === 'Space') { e.preventDefault(); toggle(); }
   else if (e.code === 'ArrowRight' && e.shiftKey) next();
   else if (e.code === 'ArrowLeft' && e.shiftKey) prev();
@@ -331,7 +509,16 @@ window.addEventListener('drop', async (e) => {
 
 /* ------------------------------ Init ------------------------------ */
 
-applyVolume();
-setFill($('seek'));
-renderQueue();
-renderPlayIcon();
+async function init() {
+  applyVolume();
+  setFill($('seek'));
+  renderPlayIcon();
+  setView('library');
+  // Show the cached library straight away, then refresh it in the background.
+  const { folders, tracks } = await window.tempo.libraryGet();
+  state.folders = folders;
+  state.library = tracks;
+  renderList();
+  rescan();
+}
+init();
