@@ -2,6 +2,7 @@ const { app, BrowserWindow, ipcMain, dialog, globalShortcut, protocol } = requir
 const path = require('path');
 const library = require('./library');
 const { createMediaHandler } = require('./media');
+const playlists = require('./playlists');
 
 let mainWindow;
 
@@ -66,6 +67,14 @@ ipcMain.handle('library:add-folder', async () => {
 });
 
 ipcMain.handle('library:remove-folder', (_e, folder) => library.removeFolder(folder));
+
+/* ------------------------------ Playlists ------------------------------ */
+
+let playlistStore;
+const store = () => playlistStore || (playlistStore = playlists.createStore(path.join(app.getPath('userData'), 'playlists.json')));
+
+ipcMain.handle('playlists:get', () => store().load());
+ipcMain.handle('playlists:set', (_e, data) => store().save(data));
 
 /* ------------------------------ App lifecycle ------------------------------ */
 

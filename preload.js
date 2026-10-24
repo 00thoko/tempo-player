@@ -7,6 +7,10 @@ contextBridge.exposeInMainWorld('tempo', {
   pathForFile: (file) => webUtils.getPathForFile(file),
   onMediaKey: (cb) => ipcRenderer.on('media-key', (_e, action) => cb(action)),
 
+  // Playlists
+  playlistsGet: () => ipcRenderer.invoke('playlists:get'),
+  playlistsSet: (data) => ipcRenderer.invoke('playlists:set', data),
+
   // Library
   libraryGet: () => ipcRenderer.invoke('library:get'),
   libraryScan: () => ipcRenderer.invoke('library:scan'),

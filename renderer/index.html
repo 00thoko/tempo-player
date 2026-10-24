@@ -29,18 +29,50 @@
     <main class="queue">
       <header class="queue-head">
         <div class="tabs" role="tablist">
-          <button class="tab active" id="tabLibrary" role="tab" aria-selected="true">Library <span id="libCount" class="count">0</span></button>
-          <button class="tab" id="tabQueue" role="tab" aria-selected="false">Queue <span id="count" class="count">0</span></button>
-        </div>
-        <div class="queue-tools">
-          <input id="filter" type="search" placeholder="Search library" />
-          <button class="btn ghost" id="playAll" title="Play everything shown">Play all</button>
-          <button class="btn ghost" id="folders" title="Choose which folders are scanned">Folders</button>
-          <button class="btn ghost" id="clear" hidden>Clear</button>
+          <button class="tab" data-view="songs" role="tab">Songs <span id="libCount" class="count">0</span></button>
+          <button class="tab" data-view="albums" role="tab">Albums</button>
+          <button class="tab" data-view="artists" role="tab">Artists</button>
+          <button class="tab" data-view="playlists" role="tab">Playlists</button>
+          <button class="tab" data-view="queue" role="tab">Queue <span id="count" class="count">0</span></button>
         </div>
       </header>
+
+      <div class="toolbar">
+        <input id="filter" type="search" placeholder="Search songs" />
+        <select id="sortBy" class="select" aria-label="Sort songs">
+          <option value="artist">Sort: Artist</option>
+          <option value="album">Sort: Album</option>
+          <option value="title">Sort: Title</option>
+          <option value="duration">Sort: Length</option>
+          <option value="added">Sort: Recently added</option>
+        </select>
+        <button class="btn ghost" id="playAll" title="Play everything shown">Play all</button>
+        <button class="btn ghost" id="folders" title="Choose which folders are scanned">Folders</button>
+        <button class="btn ghost" id="newPlaylist">New playlist</button>
+        <button class="btn ghost" id="saveQueue" title="Save the current queue as a playlist">Save as playlist</button>
+        <button class="btn ghost" id="clear">Clear</button>
+      </div>
+
+      <div id="detailHead" class="detail-head" hidden>
+        <button class="btn ghost" id="back">&larr; Back</button>
+        <div class="detail-art" id="detailArt"></div>
+        <div class="detail-info">
+          <div class="detail-title" id="detailTitle"></div>
+          <div class="detail-sub" id="detailSub"></div>
+        </div>
+        <div class="detail-actions">
+          <button class="btn ghost" id="dPlay">Play</button>
+          <button class="btn ghost" id="dShuffle">Shuffle</button>
+          <button class="btn ghost" id="dAdd">Add to playlist</button>
+          <button class="btn ghost" id="dSort">Sort</button>
+          <button class="btn ghost" id="dRename">Rename</button>
+          <button class="btn ghost" id="dDelete">Delete</button>
+        </div>
+      </div>
+
       <div id="scanStatus" class="scan" hidden></div>
       <ul id="list" class="list"></ul>
+      <div id="grid" class="grid" hidden></div>
       <div id="empty" class="empty" hidden></div>
     </main>
 
@@ -78,7 +110,7 @@
       </div>
     </footer>
 
-    <div id="drop" class="drop" hidden>Drop to add to queue</div>
+    <div id="drop" class="drop" hidden>Drop to play</div>
 
     <dialog id="foldersDialog" class="dialog">
       <h3>Library folders</h3>
@@ -90,8 +122,23 @@
         <button class="btn" id="closeFolders">Done</button>
       </div>
     </dialog>
+
+    <dialog id="nameDialog" class="dialog">
+      <form id="nameForm" method="dialog">
+        <h3 id="nameTitle">New playlist</h3>
+        <input id="nameInput" class="text-input" type="text" maxlength="100" autocomplete="off" spellcheck="false" />
+        <div class="dialog-actions">
+          <button class="btn" id="nameOk" type="submit">Save</button>
+          <button class="btn" id="nameCancel" type="button">Cancel</button>
+        </div>
+      </form>
+    </dialog>
+
+    <div id="menu" class="menu" role="menu" hidden></div>
+    <div id="toast" class="toast" role="status" hidden></div>
   </div>
   <audio id="audio" preload="metadata"></audio>
+  <script src="lib.js"></script>
   <script src="renderer.js"></script>
 </body>
 </html>

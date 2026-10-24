@@ -8,6 +8,8 @@ const crypto = require('crypto');
 const AUDIO_EXTS = new Set(['.mp3', '.flac', '.wav', '.ogg', '.oga', '.m4a', '.aac', '.opus', '.wma']);
 const COVER_EXTS = new Set(['.jpg', '.png', '.gif', '.webp']);
 
+const CACHE_VERSION = 2;
+
 let mm; // music-metadata (ESM, loaded lazily)
 let scanning = false;
 
@@ -86,6 +88,7 @@ async function readMeta(filePath, st) {
     title: path.basename(filePath, path.extname(filePath)),
     artist: 'Unknown artist',
     album: '',
+    albumArtist: '',
     track: 0,
     disc: 0,
     duration: 0,
@@ -100,6 +103,7 @@ async function readMeta(filePath, st) {
     if (c.title) track.title = c.title;
     if (c.artist) track.artist = c.artist;
     if (c.album) track.album = c.album;
+    if (c.albumartist) track.albumArtist = c.albumartist;
     track.track = (c.track && c.track.no) || 0;
     track.disc = (c.disk && c.disk.no) || 0;
     track.duration = meta.format.duration || 0;
@@ -134,8 +138,9 @@ const byLibraryOrder = (a, b) =>
   a.title.localeCompare(b.title);
 
 function getCachedTracks() {
-  const cached = readJson(cacheFile(), { tracks: [] });
-  return Array.isArray(cached.tracks) ? cached.tracks : [];
+  const cached = readJson(cacheFile(), {});
+  // Older caches lack newer fields (like the album artist), so rescan from scratch.
+  return cached.version === CACHE_VERSION && Array.isArray(cached.tracks) ? cached.tracks : [];
 }
 
 /**
@@ -169,7 +174,7 @@ async function scan(onProgress = () => {}) {
     }
 
     tracks.sort(byLibraryOrder);
-    writeJson(cacheFile(), { tracks });
+    writeJson(cacheFile(), { version: CACHE_VERSION, tracks });
     return tracks;
   } finally {
     scanning = false;
