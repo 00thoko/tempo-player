@@ -5,6 +5,7 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
+    "test": "node --test",
     "dist": "electron-builder"
   },
   "author": "",
@@ -19,7 +20,7 @@
   "build": {
     "appId": "com.example.tempoplayer",
     "productName": "Tempo Player",
-    "files": ["main.js", "preload.js", "library.js", "media.js", "renderer/**/*", "package.json"],
+    "files": ["main.js", "preload.js", "library.js", "media.js", "playlists.js", "renderer/**/*", "package.json"],
     "win": { "target": "nsis" },
     "mac": { "target": "dmg" },
     "linux": { "target": "AppImage" }
