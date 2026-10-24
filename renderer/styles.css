@@ -51,6 +51,15 @@ body {
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
 }
 .cover.has-art svg { display: none; }
+.cover { position: relative; cursor: pointer; transition: transform 0.15s; }
+.cover:hover { transform: scale(1.015); }
+.cover:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.cover::after {
+  content: "\2922"; position: absolute; right: 10px; bottom: 10px; width: 30px; height: 30px;
+  display: grid; place-items: center; border-radius: 8px; font-size: 16px; color: #fff;
+  background: rgba(0, 0, 0, 0.55); opacity: 0; transition: opacity 0.15s;
+}
+.cover:hover::after, .cover:focus-visible::after { opacity: 1; }
 .meta .title { font-size: 20px; font-weight: 700; overflow-wrap: anywhere; }
 .meta .artist { color: var(--accent-2); margin-top: 4px; }
 .meta .album { color: var(--muted); margin-top: 2px; font-size: 13px; }
@@ -103,10 +112,12 @@ body {
 .detail-sub { color: var(--muted); font-size: 13px; }
 .detail-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
+/* Lives in the sidebar, so showing or hiding it never moves the song list. */
 .scan {
-  margin: 0 24px 8px; padding: 6px 12px; border-radius: 8px;
-  background: var(--panel); color: var(--muted); font-size: 12px;
+  margin-top: auto; padding: 6px 12px; border-radius: 8px;
+  background: var(--panel-2); color: var(--muted); font-size: 12px;
 }
+.scan:not([hidden]) + .open-buttons { margin-top: 0; }
 
 .list { list-style: none; margin: 0; padding: 0 12px 12px; overflow-y: auto; flex: 1; min-height: 0; }
 .list:empty, .grid:empty { display: none; }
@@ -274,6 +285,30 @@ input[type="range"]:hover::-webkit-slider-thumb { opacity: 1; }
   font-size: 20px; font-weight: 600; z-index: 10; pointer-events: none;
 }
 .drop[hidden] { display: none; }
+
+/* ---------- Full screen cover ---------- */
+.fs-view { display: none; }
+body.fs .app > :not(#fsView) { display: none !important; }
+body.fs .app { display: block; }
+body.fs .fs-view {
+  display: grid; place-items: center; position: fixed; inset: 0; z-index: 100;
+  background: #000; overflow: hidden; cursor: pointer;
+}
+body.fs-idle, body.fs-idle .fs-view { cursor: none; }
+/* The blurred cover fills the whole screen as the background. */
+.fs-bg {
+  position: absolute; inset: -6%; background: #0b0c10 center / cover no-repeat;
+  filter: blur(54px) brightness(0.72) saturate(1.25);
+}
+/* A smaller, sharp copy sits in the bottom-right corner. */
+.fs-art {
+  position: absolute; right: 40px; bottom: 40px; width: clamp(180px, 30vmin, 380px); aspect-ratio: 1;
+  border-radius: 14px; background: var(--panel-2) center / cover no-repeat;
+  display: grid; place-items: center; color: var(--muted);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+.fs-art svg { width: 22%; height: 22%; opacity: 0.4; }
+.fs-art.has-art svg { display: none; }
 
 ::-webkit-scrollbar { width: 10px; }
 ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 6px; }

@@ -364,9 +364,17 @@ function updateDuration(t) {
   if (node) node.textContent = fmt(t.duration);
 }
 
+function renderFsArt(t) {
+  const url = t && t.cover ? `url("${t.cover}")` : '';
+  $('fsBg').style.backgroundImage = url;
+  $('fsArt').style.backgroundImage = url;
+  $('fsArt').classList.toggle('has-art', !!url);
+}
+
 function renderNowPlaying() {
   const t = state.queue[state.index];
   const cover = $('cover');
+  renderFsArt(t);
   if (!t) {
     $('title').textContent = 'Nothing playing';
     $('artist').textContent = 'Pick a song from your library';
@@ -1004,6 +1012,7 @@ window.addEventListener('keydown', (e) => {
   else if (e.key === 's' || e.key === 'S') setShuffle(!state.shuffle);
   else if (e.key === 'r' || e.key === 'R') cycleRepeat();
   else if (e.key === 'm' || e.key === 'M') toggleMute();
+  else if ((e.key === 'f' || e.key === 'F') && !e.ctrlKey && !e.metaKey) toggleFullscreen();
 });
 
 window.tempo.onMediaKey((a) => ({ toggle, next, prev }[a] || (() => {}))());
@@ -1033,6 +1042,45 @@ window.addEventListener('drop', async (e) => {
   const paths = [...e.dataTransfer.files].map((f) => window.tempo.pathForFile(f)).filter(Boolean);
   if (paths.length) addTracks(await window.tempo.loadPaths(paths));
 });
+
+/* ------------------------------ Full screen cover ------------------------------ */
+
+async function enterFullscreen() {
+  if (state.index < 0) { toast('Play a song first'); return; }
+  try {
+    await document.documentElement.requestFullscreen();
+  } catch {
+    toast('Full screen is not available');
+  }
+}
+
+function toggleFullscreen() {
+  if (document.fullscreenElement) document.exitFullscreen();
+  else enterFullscreen();
+}
+
+// Hide the mouse pointer after a couple of idle seconds, like a video player.
+let fsIdleTimer;
+function wakeCursor() {
+  document.body.classList.remove('fs-idle');
+  clearTimeout(fsIdleTimer);
+  if (document.fullscreenElement) fsIdleTimer = setTimeout(() => document.body.classList.add('fs-idle'), 2000);
+}
+
+// Esc (or the OS) can leave full screen too, so the page follows the browser's state.
+document.addEventListener('fullscreenchange', () => {
+  const on = !!document.fullscreenElement;
+  document.body.classList.toggle('fs', on);
+  if (on) renderFsArt(state.queue[state.index]);
+  wakeCursor();
+});
+window.addEventListener('mousemove', wakeCursor);
+
+$('cover').addEventListener('click', toggleFullscreen);
+$('cover').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); enterFullscreen(); }
+});
+$('fsView').addEventListener('click', () => { if (document.fullscreenElement) document.exitFullscreen(); });
 
 /* ------------------------------ Init ------------------------------ */
 

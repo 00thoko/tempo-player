@@ -11,7 +11,7 @@
 <body>
   <div class="app">
     <aside class="now">
-      <div class="cover" id="cover">
+      <div class="cover" id="cover" role="button" tabindex="0" title="Full screen (F)" aria-label="Show the album cover full screen">
         <svg viewBox="0 0 24 24" width="64" height="64" aria-hidden="true"><path fill="currentColor" d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/></svg>
       </div>
       <div class="meta">
@@ -19,6 +19,7 @@
         <div class="artist" id="artist">Pick a song from your library</div>
         <div class="album" id="album"></div>
       </div>
+      <div id="scanStatus" class="scan" hidden></div>
       <div class="open-buttons">
         <button class="btn" id="openFiles">Open files</button>
         <button class="btn" id="openFolder">Open folder</button>
@@ -70,7 +71,6 @@
         </div>
       </div>
 
-      <div id="scanStatus" class="scan" hidden></div>
       <ul id="list" class="list"></ul>
       <div id="grid" class="grid" hidden></div>
       <div id="empty" class="empty" hidden></div>
@@ -136,6 +136,13 @@
 
     <div id="menu" class="menu" role="menu" hidden></div>
     <div id="toast" class="toast" role="status" hidden></div>
+
+    <div id="fsView" class="fs-view" title="Click or press Esc to exit full screen">
+      <div class="fs-bg" id="fsBg"></div>
+      <div class="fs-art" id="fsArt">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/></svg>
+      </div>
+    </div>
   </div>
   <audio id="audio" preload="metadata"></audio>
   <script src="lib.js"></script>

@@ -9,6 +9,7 @@ A simple, modern desktop music player built with Electron.
 - Browse by **Songs**, **Albums** (cover grid) and **Artists**, each with its own detail screen
 - **Playlists**: create, rename and delete your own; add songs with the **+** button or right-click; drag songs to reorder; sort by title, artist, album or length; save the current queue as a playlist
 - Sort the Songs tab by artist, album, title, length or recently added
+- Click the album cover (top left) or press **F** for a full-screen view: the blurred cover as the background and the sharp cover in the bottom-right corner; Esc or a click exits
 - Queue with title, artist, album, duration and cover art
 - Play/pause, next/previous, seek bar, volume, mute
 - Shuffle, repeat (off / all / one)
@@ -44,6 +45,7 @@ The installer appears in the `dist/` folder (Windows `.exe`, macOS `.dmg`, Linux
 | S | Toggle shuffle |
 | R | Cycle repeat mode |
 | M | Mute |
+| F | Full-screen cover view (also Esc to leave) |
 
 Keyboard media keys (play/pause, next, previous) also work when the app is not focused.
 
